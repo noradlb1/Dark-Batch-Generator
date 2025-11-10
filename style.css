@@ -1,0 +1,207 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+html,body{
+  margin:0;
+  height:100%;
+  background:#000;
+  color:#0f0;
+  font-family:'Share Tech Mono',monospace;
+  overflow-x:hidden;
+}
+
+/* ========== MATRIX INTRO ========== */
+#matrix{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  z-index:9999;
+  background:#000;
+  transition:opacity 1.5s ease-in-out, visibility 1.5s ease-in-out;
+}
+#matrix.fade-out{
+  opacity:0;
+  visibility:hidden;
+}
+
+/* ========== MAIN CONTAINER ========== */
+.container{
+  position:relative;
+  padding:40px 20px;
+  max-width:960px;
+  margin:0 auto;
+  box-sizing:border-box;
+  opacity:0;
+  transform:translateY(40px);
+  transition:opacity 1s ease, transform 1s ease;
+}
+.container.visible{
+  opacity:1;
+  transform:translateY(0);
+}
+
+.title{
+  font-size:36px;
+  text-align:center;
+  color:#0f0;
+  text-shadow:0 0 10px #0f0;
+  margin-bottom:5px;
+  letter-spacing:2px;
+}
+.subtitle{text-align:center;font-size:14px;color:#39ff14;margin-bottom:25px;}
+
+/* ========== PANEL ========== */
+.panel{
+  background:rgba(0,20,0,0.25);
+  border:1px solid #0a0;
+  box-shadow:0 0 15px rgba(0,255,0,0.2);
+  padding:25px;
+  border-radius:8px;
+  backdrop-filter:blur(3px);
+}
+.label{font-size:15px;color:#39ff14;}
+.input{
+  width:100%;
+  background:#001a00;
+  color:#0f0;
+  border:1px solid #0f0;
+  padding:8px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:15px;
+  border-radius:4px;
+  box-shadow:inset 0 0 5px #0f0;
+  margin-top:5px;
+  margin-bottom:15px;
+  box-sizing:border-box;
+}
+.btn{
+  background:#001a00;
+  color:#0f0;
+  border:1px solid #0f0;
+  padding:8px 14px;
+  border-radius:4px;
+  cursor:pointer;
+  font-family:'Share Tech Mono',monospace;
+  transition:all .15s ease-in-out;
+}
+.btn:hover{background:#0f0;color:#000;box-shadow:0 0 10px #0f0;}
+.btn-small{font-size:13px;padding:6px 10px;}
+.actions{display:flex;flex-wrap:wrap;gap:10px;}
+
+.checkbox input{accent-color:#0f0;transform:scale(1.2);}
+.checkbox{color:#39ff14;margin-top:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+
+.range{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:10px;
+}
+.range label{
+  background:#001a00;
+  padding:6px;
+  border-radius:4px;
+  border:1px solid #0f0;
+  box-shadow:inset 0 0 5px #0f0;
+  color:#0f0;
+  flex:1 1 150px;
+  box-sizing:border-box;
+}
+.range input{
+  width:60px;
+  margin-left:4px;
+  background:#000;
+  color:#0f0;
+  border:1px solid #0f0;
+  border-radius:3px;
+}
+
+.section-title{
+  margin-top:40px;
+  text-align:center;
+  font-size:24px;
+  color:#39ff14;
+  text-shadow:0 0 6px #0f0;
+}
+.preview{
+  width:100%;
+  height:350px;
+  background:#000;
+  border:1px solid #0f0;
+  color:#0f0;
+  padding:12px;
+  overflow:auto;
+  box-shadow:inset 0 0 10px #0f0;
+  border-radius:8px;
+  font-size:13px;
+  line-height:1.4;
+  margin-top:15px;
+  animation:glow 2s infinite alternate;
+  box-sizing:border-box;
+}
+@keyframes glow{
+  from{box-shadow:inset 0 0 10px #0f0;}
+  to{box-shadow:inset 0 0 20px #39ff14;}
+}
+
+/* ========== FOOTER ========== */
+.footer{
+  text-align:center;
+  color:#0f0;
+  margin-top:40px;
+  font-size:14px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding-bottom:25px;
+}
+.footer .links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+}
+.footer .links a{
+  color:#39ff14;
+  text-decoration:none;
+}
+.footer .links a:hover{text-shadow:0 0 5px #0f0;}
+
+/* ========== TOAST ========== */
+#toast{
+  visibility:hidden;
+  min-width:240px;
+  background:#001a00;
+  color:#0f0;
+  text-align:center;
+  border:1px solid #0f0;
+  border-radius:5px;
+  padding:12px;
+  position:fixed;
+  z-index:10000;
+  bottom:20px;
+  opacity:0;
+  transition:all 0.5s ease;
+  word-break:break-word;
+}
+#toast.show{visibility:visible;opacity:1;}
+#toast.right{right:-300px;animation:slideInRight 0.5s forwards;}
+#toast.left{left:-300px;animation:slideInLeft 0.5s forwards;}
+@keyframes slideInRight{to{right:20px;}}
+@keyframes slideInLeft{to{left:20px;}}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width:768px){
+  .title{font-size:28px;}
+  .panel{padding:20px;}
+  .preview{height:300px;font-size:12px;}
+  .range label{flex:1 1 45%;}
+}
+@media (max-width:480px){
+  .actions{flex-direction:column;align-items:stretch;}
+  .btn{width:100%;}
+  .range label{flex:1 1 100%;}
+  .footer{font-size:12px;}
+  .footer .links{flex-direction:column;gap:4px;}
+}
